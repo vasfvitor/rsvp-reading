@@ -8,6 +8,7 @@
   export let fadeDuration = 150;
   export let fadeEnabled = true;
   export let displayMode = 'single'; // 'single', 'multi-word', 'wrapped'
+  export let wrappedLineCount = 4;
 
   $: useWrappedMode = displayMode === 'wrapped' && wordGroup.length > 0;
   $: useMultiMode = displayMode === 'multi-word' && wordGroup.length > 0;
@@ -36,7 +37,12 @@
     <div class="marker-line bottom"></div>
   </div>
 
-  <div class="word-container" class:multi-mode={displayMode === 'multi-word'} class:wrapped-mode={displayMode === 'wrapped'} style="opacity: {opacity}; transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;">
+  <div
+    class="word-container"
+    class:multi-mode={displayMode === 'multi-word'}
+    class:wrapped-mode={displayMode === 'wrapped'}
+    style={`opacity: ${opacity}; transition: opacity ${fadeEnabled ? fadeDuration : 0}ms ease-in-out;${displayMode === 'wrapped' ? ` --wrapped-lines: ${wrappedLineCount};` : ''}`}
+  >
     {#if useWrappedMode}
       <!-- Wrapped mode: show entire phrase with wrapped text -->
       <div class="wrapped-phrase">
@@ -149,7 +155,7 @@
     word-wrap: break-word;
     word-break: break-word;
     line-height: 1.18;
-    height: min(52vh, 18rem);
+    height: min(calc(var(--wrapped-lines, 4) * 1.18em + 1.5rem), 70vh);
     max-width: min(88vw, 62rem);
     overflow: hidden;
     align-items: center;
@@ -232,7 +238,6 @@
 
     .word-container.wrapped-mode {
       font-size: clamp(0.95rem, 4.8vw, 1.45rem);
-      height: min(58vh, 22rem);
       max-width: 92vw;
       line-height: 1.16;
     }

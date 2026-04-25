@@ -11,8 +11,9 @@
   export let pauseDuration = 500;
   export let frameWordCount = 1;
   export let wordLengthWPMMultiplier = 5;
-  export let targetFPS = 60;
-  export let displayMode = 'single'; // 'single', 'multi-word', 'wrapped'
+  export let targetFPS = 75;
+  export let displayMode = 'wrapped'; // 'single', 'multi-word', 'wrapped'
+  export let wrappedLineCount = 4;
 
   const dispatch = createEventDispatcher();
 
@@ -24,7 +25,7 @@
   const wpmPresets = [200, 300, 400, 500];
 
   // FPS options
-  const fpsOptions = [30, 60, 120];
+  const fpsOptions = [30, 60, 75];
 
   // Display mode options
   const displayModes = [
@@ -155,6 +156,25 @@
         </div>
         <input type="range" min="1" max="200" step="2" bind:value={frameWordCount} class="slider">
         <p class="hint-text">Odd numbers (1, 3, 5, 7) center the highlight best</p>
+      </div>
+    {/if}
+
+    {#if displayMode === 'wrapped'}
+      <div class="control-row">
+        <div class="control-header">
+          <span>Wrapped height</span>
+          <span class="control-value">{wrappedLineCount} lines</span>
+        </div>
+        <input
+          type="range"
+          min="2"
+          max="10"
+          step="1"
+          bind:value={wrappedLineCount}
+          class="slider"
+          aria-label="Wrapped height"
+        >
+        <p class="hint-text">Set how many text lines the wrapped viewport should fit</p>
       </div>
     {/if}
   </section>

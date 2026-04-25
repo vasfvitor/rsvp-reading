@@ -51,8 +51,9 @@
   let pauseOnPunctuation = true;
   let punctuationPauseMultiplier = 2;
   let wordLengthWPMMultiplier = 5;
-  let targetFPS = 60;
-  let displayMode = 'single'; // 'single', 'multi-word', 'wrapped'
+  let targetFPS = 75;
+  let displayMode = 'wrapped'; // 'single', 'multi-word', 'wrapped'
+  let wrappedLineCount = 4;
 
   // Animation
   let wordOpacity = 1;
@@ -230,7 +231,8 @@
         pauseDuration,
         frameWordCount,
         targetFPS,
-        displayMode
+        displayMode,
+        wrappedLineCount
       }
     });
   }
@@ -256,6 +258,7 @@
       frameWordCount = session.settings.frameWordCount ?? frameWordCount;
       targetFPS = session.settings.targetFPS ?? targetFPS;
       displayMode = session.settings.displayMode ?? displayMode;
+      wrappedLineCount = session.settings.wrappedLineCount ?? wrappedLineCount;
     }
 
     showSavedSessionPrompt = false;
@@ -468,6 +471,7 @@
         bind:frameWordCount
         bind:targetFPS
         bind:displayMode
+        bind:wrappedLineCount
         on:close={() => showSettings = false}
       />
     </div>
@@ -526,6 +530,7 @@
       {fadeEnabled}
       multiWordEnabled={frameWordCount > 1}
       {displayMode}
+      {wrappedLineCount}
     />
   </div>
 
