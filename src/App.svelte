@@ -23,7 +23,7 @@
   import ProgressBar from './lib/components/ProgressBar.svelte';
   import { extractWordFrame } from './lib/rsvp-utils.js';
 
-  const WRAPPED_WORD_COUNT = 48;
+  const WRAPPED_WORDS_PER_LINE = 12;
 
   // State
   let frameWordCount = 1;
@@ -65,7 +65,14 @@
   // Derived state
   $: currentWord = words[currentWordIndex - 1] || (words.length > 0 ? words[0] : '');
   $: wordFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), frameWordCount);
-  $: wrappedFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), WRAPPED_WORD_COUNT);
+  $: wrappedFlashWordCount = Math.max(1, wrappedLineCount * WRAPPED_WORDS_PER_LINE);
+  $: wrappedFrameStart = displayMode === 'wrapped'
+    ? (currentWordIndex > 0 ? Math.max(0, currentWordIndex - wrappedFlashWordCount) : 0)
+    : 0;
+  $: wrappedFrameEnd = displayMode === 'wrapped'
+    ? (currentWordIndex > 0 ? currentWordIndex : Math.min(words.length, wrappedFlashWordCount))
+    : 0;
+  $: wrappedFrame = words.slice(wrappedFrameStart, wrappedFrameEnd);
   $: timeRemaining = formatTimeRemaining(words.length - currentWordIndex, wordsPerMinute);
   $: isFocusMode = isPlaying || isPaused;
   $: maxWPM = calculateMaxWPMFromFPS(targetFPS);
@@ -86,6 +93,10 @@
       return;
     }
 
+    const advanceCount = displayMode === 'wrapped'
+      ? Math.min(wrappedFlashWordCount, words.length - currentWordIndex)
+      : 1;
+
     if (shouldPauseAtWord(currentWordIndex, pauseAfterWords)) {
       isPaused = true;
       setTimeout(() => {
@@ -97,31 +108,30 @@
       return;
     }
 
-    if (fadeEnabled) {
+    if (displayMode !== 'wrapped' && fadeEnabled) {
       wordOpacity = 0;
       fadeTimeoutId = setTimeout(() => {
         wordOpacity = 1;
       }, 10);
     }
 
-    progress = ((currentWordIndex + 1) / words.length) * 100;
-    currentWordIndex++;
+    progress = ((currentWordIndex + advanceCount) / words.length) * 100;
+    currentWordIndex += advanceCount;
     scheduleNextWord();
   }
 
   function scheduleNextWord() {
     if (!isPlaying || currentWordIndex >= words.length) return;
-    
-    const word = words[currentWordIndex - 1] || '';
-    const wordDelay = getWordDelay(word);
-    const frameInterval = getFrameInterval(targetFPS);
-    
-    // Use RAF-based scheduling that respects display refresh rate
+
+    const wordDelay = displayMode === 'wrapped'
+      ? getWordDelay('', wordsPerMinute, false, 1, 0)
+      : getWordDelay(words[currentWordIndex - 1] || '');
+
     lastFrameTime = performance.now();
-    
+
     const scheduleFrame = (currentTime) => {
       if (!isPlaying) return;
-      
+
       const elapsed = currentTime - lastFrameTime;
       if (elapsed >= wordDelay) {
         showNextWord();
@@ -523,11 +533,11 @@
   <div class="display-area">
     <RSVPDisplay
       word={currentWord}
-      wordGroup={displayMode === 'wrapped' ? wrappedFrame.subset : wordFrame.subset}
-      highlightIndex={displayMode === 'wrapped' ? wrappedFrame.centerOffset : wordFrame.centerOffset}
-      opacity={wordOpacity}
+      wordGroup={displayMode === 'wrapped' ? wrappedFrame : wordFrame.subset}
+      highlightIndex={displayMode === 'wrapped' ? 0 : wordFrame.centerOffset}
+      opacity={displayMode === 'wrapped' ? 1 : wordOpacity}
       {fadeDuration}
-      {fadeEnabled}
+      fadeEnabled={displayMode !== 'wrapped' && fadeEnabled}
       multiWordEnabled={frameWordCount > 1}
       {displayMode}
       {wrappedLineCount}
