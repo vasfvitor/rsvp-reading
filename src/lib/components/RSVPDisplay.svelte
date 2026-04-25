@@ -7,9 +7,13 @@
   export let opacity = 1;
   export let fadeDuration = 150;
   export let fadeEnabled = true;
-  export let multiWordEnabled = false;
+  export let displayMode = 'single'; // 'single', 'multi-word', 'wrapped'
 
-  $: useMultiMode = multiWordEnabled && wordGroup.length > 0;
+  function getORP(w) {
+    return getActualORPIndex(w);
+  }
+
+  $: useMultiMode = (displayMode === 'multi-word' || displayMode === 'wrapped') && wordGroup.length > 0;
 
   // Get the current word (either from single mode or the highlighted word in group)
   $: currentWord = useMultiMode ? (wordGroup[highlightIndex] || '') : word;
@@ -26,6 +30,7 @@
 
   // FIX: Detect Hebrew, Arabic, and other RTL scripts
   $: isRtl = /[\u0591-\u07FF\uFB1D-\uFDFD\uFE70-\uFEFC]/.test(currentWord);
+
 </script>
 
 <div class="rsvp-display">
@@ -34,12 +39,22 @@
     <div class="marker-line bottom"></div>
   </div>
 
-  <div
-    class="word-container"
-    class:multi-mode={useMultiMode}
-    style="opacity: {opacity}; transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;"
-  >
-    {#if currentWord}
+  <div class="word-container" class:multi-mode={displayMode === 'multi-word'} class:wrapped-mode={displayMode === 'wrapped'} style="opacity: {opacity}; transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;">
+    {#if displayMode === 'wrapped' && useMultiMode}
+      <!-- Wrapped mode: show entire phrase with wrapped text -->
+      <div class="wrapped-phrase">
+        {#each wordGroup as w, idx}
+          <span class="wrapped-word" class:highlight={idx === highlightIndex}>
+            {#if idx === highlightIndex}
+              <!-- Show ORP for highlighted word -->
+              <span class="before-orp">{w.slice(0, getORP(w))}</span><span class="orp">{w[getORP(w)] || ''}</span><span class="after-orp">{w.slice(getORP(w) + 1)}</span>
+            {:else}
+              {w}
+            {/if}
+          </span>
+        {/each}
+      </div>
+    {:else if currentWord}
       <!-- ORP letter always centered at 50% -->
       <span class="orp">{focusChar}</span>
 
@@ -134,6 +149,33 @@
 
   .word-container.multi-mode {
     font-size: clamp(1.2rem, 4vw, 3rem);
+  }
+
+  .word-container.wrapped-mode {
+    font-size: clamp(1.2rem, 3vw, 2.5rem);
+    white-space: normal;
+    word-wrap: break-word;
+    word-break: break-word;
+    line-height: 1.5;
+    height: auto;
+    max-width: 90vw;
+  }
+
+  .wrapped-phrase {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5em;
+    justify-content: center;
+    align-items: baseline;
+  }
+
+  .wrapped-word {
+    color: #ccc;
+    font-weight: 400;
+  }
+
+  .wrapped-word.highlight {
+    font-weight: 600;
   }
 
   .context-words {

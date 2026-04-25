@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { calculateMaxWPMFromFPS } from '../rsvp-utils.js';
 
   export let wordsPerMinute = 300;
   export let fadeEnabled = true;
@@ -10,6 +11,8 @@
   export let pauseDuration = 500;
   export let frameWordCount = 1;
   export let wordLengthWPMMultiplier = 5;
+  export let targetFPS = 60;
+  export let displayMode = 'single'; // 'single', 'multi-word', 'wrapped'
 
   const dispatch = createEventDispatcher();
 
@@ -19,6 +22,19 @@
 
   // Quick WPM presets
   const wpmPresets = [200, 300, 400, 500];
+
+  // FPS options
+  const fpsOptions = [30, 60, 120];
+
+  // Display mode options
+  const displayModes = [
+    { value: 'single', label: 'Single Word' },
+    { value: 'multi-word', label: 'Multi-Word Context' },
+    { value: 'wrapped', label: 'Wrapped Text' }
+  ];
+
+  // Calculate maximum WPM based on selected FPS
+  $: maxWPM = calculateMaxWPMFromFPS(targetFPS);
 </script>
 
 <div class="settings-panel">
@@ -44,11 +60,12 @@
       <div class="wpm-display">
         <span class="wpm-value">{wordsPerMinute}</span>
         <span class="wpm-label">words/min</span>
+        <span class="wpm-max">(max {maxWPM})</span>
       </div>
       <input
         type="range"
         min="50"
-        max="1000"
+        max={maxWPM}
         step="25"
         bind:value={wordsPerMinute}
         class="slider"
@@ -64,6 +81,25 @@
           </button>
         {/each}
       </div>
+    </div>
+
+    <div class="control-row">
+      <div class="control-header">
+        <span>Display Refresh Rate</span>
+        <span class="control-value">{targetFPS} FPS</span>
+      </div>
+      <div class="fps-buttons">
+        {#each fpsOptions as fps}
+          <button
+            class="fps-btn"
+            class:active={targetFPS === fps}
+            on:click={() => targetFPS = fps}
+          >
+            {fps} FPS
+          </button>
+        {/each}
+      </div>
+      <p class="hint-text">Match your monitor's refresh rate for smooth playback</p>
     </div>
 
     <div class="control-row">
@@ -89,8 +125,35 @@
         <span>Words shown simultaneously</span>
         <span class="control-value">{frameWordCount}</span>
       </div>
-      <input type="range" min="1" max="7" step="2" bind:value={frameWordCount} class="slider">
+      <input type="range" min="1" max="70" step="2" bind:value={frameWordCount} class="slider">
       <p class="hint-text">Odd numbers (1, 3, 5, 7) center the highlight best</p>
+    </div>
+
+    <div class="control-row">
+      <div class="control-header">
+        <span>Display Mode</span>
+      </div>
+      <div class="display-mode-buttons">
+        {#each displayModes as mode}
+          <button
+            class="mode-btn"
+            class:active={displayMode === mode.value}
+            on:click={() => displayMode = mode.value}
+            title={mode.label}
+          >
+            {mode.label}
+          </button>
+        {/each}
+      </div>
+      <p class="hint-text">
+        {#if displayMode === 'single'}
+          Show one word at a time
+        {:else if displayMode === 'multi-word'}
+          Show context words around focal point
+        {:else if displayMode === 'wrapped'}
+          Break text naturally across multiple lines
+        {/if}
+      </p>
     </div>
   </section>
 
@@ -284,6 +347,13 @@
     margin-top: -0.25rem;
   }
 
+  .wpm-max {
+    display: block;
+    color: #888;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+
   .wpm-presets {
     display: flex;
     gap: 0.75rem;
@@ -319,6 +389,71 @@
   }
 
   .preset-btn.active {
+    background: #ff4444;
+    border-color: #ff4444;
+    color: #fff;
+  }
+
+  /* FPS Buttons */
+  .fps-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .fps-btn {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #252525;
+    color: #888;
+    padding: 0.75rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .fps-btn:hover {
+    background: #222;
+    color: #fff;
+    border-color: #333;
+  }
+
+  .fps-btn.active {
+    background: #ff4444;
+    border-color: #ff4444;
+    color: #fff;
+  }
+
+  /* Display Mode Buttons */
+  .display-mode-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .mode-btn {
+    background: #1a1a1a;
+    border: 1px solid #252525;
+    color: #888;
+    padding: 0.75rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+  }
+
+  .mode-btn:hover {
+    background: #222;
+    color: #fff;
+    border-color: #333;
+  }
+
+  .mode-btn.active {
     background: #ff4444;
     border-color: #ff4444;
     color: #fff;

@@ -174,3 +174,59 @@ export function extractWordFrame(allWords, centerIdx, frameSize) {
 
   return { subset, centerOffset };
 }
+
+/**
+ * Group words into phrases (sentences or clauses) for wrapped display
+ * @param {string[]} words - Array of words
+ * @param {number} maxWordsPerPhrase - Max words before forcing a line break (default 5)
+ * @returns {string[][]} Array of phrase groups (each phrase is an array of words)
+ */
+export function groupWordsIntoPhrases(words, maxWordsPerPhrase = 5) {
+  if (!Array.isArray(words) || words.length === 0) return [];
+
+  const phrases = [];
+  let currentPhrase = [];
+
+  for (const word of words) {
+    currentPhrase.push(word);
+
+    // Break on sentence-ending punctuation or max words
+    if (/[.!?;:]$/.test(word) || currentPhrase.length >= maxWordsPerPhrase) {
+      phrases.push([...currentPhrase]);
+      currentPhrase = [];
+    }
+  }
+
+  // Add any remaining words
+  if (currentPhrase.length > 0) {
+    phrases.push(currentPhrase);
+  }
+
+  return phrases;
+}
+
+/**
+ * Calculate minimum WPM based on target FPS (FPS determines refresh rate ceiling)
+ * At 60 FPS, minimum display time per word is ~16.67ms, allowing very high WPM
+ * @param {number} targetFPS - Target frames per second (30, 60, 120, etc)
+ * @returns {number} Maximum WPM ceiling
+ */
+export function calculateMaxWPMFromFPS(targetFPS) {
+  if (!targetFPS || targetFPS <= 0) return 1000; // Fallback
+  // 1 word per refresh frame at target FPS
+  // WPM = (FPS * 60) / 1 (since 1 word per frame)
+  // But we need minimum 1 frame per word, so max is FPS * 60
+  // Actually: 60000ms/min ÷ (1000ms/FPS) = 60 * FPS
+  return Math.floor(60 * targetFPS);
+}
+
+/**
+ * Get optimal word timing using frame-based scheduling
+ * @param {number} wordsPerMinute - Reading speed in WPM
+ * @param {number} targetFPS - Target refresh rate for frame sync
+ * @returns {number} Milliseconds to wait between frames
+ */
+export function getFrameInterval(targetFPS) {
+  if (!targetFPS || targetFPS <= 0) return 16.67; // ~60 FPS default
+  return 1000 / targetFPS;
+}

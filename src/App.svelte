@@ -4,7 +4,10 @@
     parseText as parseTextUtil,
     getWordDelay as getWordDelayUtil,
     formatTimeRemaining,
-    shouldPauseAtWord
+    shouldPauseAtWord,
+    groupWordsIntoPhrases,
+    calculateMaxWPMFromFPS,
+    getFrameInterval
   } from './lib/rsvp-utils.js';
   import { parseFile } from './lib/file-parsers.js';
   import {
@@ -19,7 +22,7 @@
   import Settings from './lib/components/Settings.svelte';
   import TextInput from './lib/components/TextInput.svelte';
   import ProgressBar from './lib/components/ProgressBar.svelte';
-  import { extractWordFrame } from './lib/rsvp-utils.js';
+  import { extractWordFrame, groupWordsIntoPhrases as createPhrases } from './lib/rsvp-utils.js';
 
   // State
   let frameWordCount = 1;
@@ -47,17 +50,28 @@
   let pauseOnPunctuation = true;
   let punctuationPauseMultiplier = 2;
   let wordLengthWPMMultiplier = 5;
+  let targetFPS = 60;
+  let displayMode = 'single'; // 'single', 'multi-word', 'wrapped'
 
   // Animation
   let wordOpacity = 1;
   let intervalId = null;
   let fadeTimeoutId = null;
+  let rafId = null;
+  let lastFrameTime = 0;
+  let phraseGroups = [];
 
   // Derived state
   $: currentWord = words[currentWordIndex - 1] || (words.length > 0 ? words[0] : '');
   $: wordFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), frameWordCount);
   $: timeRemaining = formatTimeRemaining(words.length - currentWordIndex, wordsPerMinute);
   $: isFocusMode = isPlaying || isPaused;
+  $: maxWPM = calculateMaxWPMFromFPS(targetFPS);
+  
+  // Update phrase groups when text or displayMode changes
+  $: if (displayMode === 'wrapped') {
+    phraseGroups = createPhrases(words);
+  }
 
   function parseText() {
     words = parseTextUtil(text);
@@ -100,8 +114,26 @@
 
   function scheduleNextWord() {
     if (!isPlaying || currentWordIndex >= words.length) return;
+    
     const word = words[currentWordIndex - 1] || '';
-    intervalId = setTimeout(showNextWord, getWordDelay(word));
+    const wordDelay = getWordDelay(word);
+    const frameInterval = getFrameInterval(targetFPS);
+    
+    // Use RAF-based scheduling that respects display refresh rate
+    lastFrameTime = performance.now();
+    
+    const scheduleFrame = (currentTime) => {
+      if (!isPlaying) return;
+      
+      const elapsed = currentTime - lastFrameTime;
+      if (elapsed >= wordDelay) {
+        showNextWord();
+      } else {
+        rafId = requestAnimationFrame(scheduleFrame);
+      }
+    };
+    
+    rafId = requestAnimationFrame(scheduleFrame);
   }
 
   function start() {
@@ -120,6 +152,10 @@
     if (intervalId) {
       clearTimeout(intervalId);
       intervalId = null;
+    }
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
     }
   }
 
@@ -140,6 +176,10 @@
     if (intervalId) {
       clearTimeout(intervalId);
       intervalId = null;
+    }
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
     }
   }
 
@@ -192,7 +232,9 @@
         wordLengthWPMMultiplier,
         pauseAfterWords,
         pauseDuration,
-        frameWordCount
+        frameWordCount,
+        targetFPS,
+        displayMode
       }
     });
   }
@@ -216,6 +258,8 @@
       pauseAfterWords = session.settings.pauseAfterWords ?? pauseAfterWords;
       pauseDuration = session.settings.pauseDuration ?? pauseDuration;
       frameWordCount = session.settings.frameWordCount ?? frameWordCount;
+      targetFPS = session.settings.targetFPS ?? targetFPS;
+      displayMode = session.settings.displayMode ?? displayMode;
     }
 
     showSavedSessionPrompt = false;
@@ -305,7 +349,7 @@
         break;
       case 'ArrowUp':
         e.preventDefault();
-        wordsPerMinute = Math.min(1000, wordsPerMinute + 25);
+        wordsPerMinute = Math.min(maxWPM, wordsPerMinute + 25);
         break;
       case 'ArrowDown':
         e.preventDefault();
@@ -344,6 +388,7 @@
   onDestroy(() => {
     if (intervalId) clearTimeout(intervalId);
     if (fadeTimeoutId) clearTimeout(fadeTimeoutId);
+    if (rafId) cancelAnimationFrame(rafId);
     window.removeEventListener('keydown', handleKeydown);
   });
 </script>
@@ -425,6 +470,8 @@
         bind:pauseAfterWords
         bind:pauseDuration
         bind:frameWordCount
+        bind:targetFPS
+        bind:displayMode
         on:close={() => showSettings = false}
       />
     </div>
@@ -482,6 +529,7 @@
       {fadeDuration}
       {fadeEnabled}
       multiWordEnabled={frameWordCount > 1}
+      {displayMode}
     />
   </div>
 
