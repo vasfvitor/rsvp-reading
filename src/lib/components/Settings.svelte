@@ -122,15 +122,6 @@
 
     <div class="control-row">
       <div class="control-header">
-        <span>Words shown simultaneously</span>
-        <span class="control-value">{frameWordCount}</span>
-      </div>
-      <input type="range" min="1" max="70" step="2" bind:value={frameWordCount} class="slider">
-      <p class="hint-text">Odd numbers (1, 3, 5, 7) center the highlight best</p>
-    </div>
-
-    <div class="control-row">
-      <div class="control-header">
         <span>Display Mode</span>
       </div>
       <div class="display-mode-buttons">
@@ -155,6 +146,17 @@
         {/if}
       </p>
     </div>
+
+    {#if displayMode === 'multi-word'}
+      <div class="control-row">
+        <div class="control-header">
+          <span>Words shown simultaneously</span>
+          <span class="control-value">{frameWordCount}</span>
+        </div>
+        <input type="range" min="1" max="200" step="2" bind:value={frameWordCount} class="slider">
+        <p class="hint-text">Odd numbers (1, 3, 5, 7) center the highlight best</p>
+      </div>
+    {/if}
   </section>
 
   <!-- Effects Section -->

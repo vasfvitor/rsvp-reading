@@ -5,7 +5,6 @@
     getWordDelay as getWordDelayUtil,
     formatTimeRemaining,
     shouldPauseAtWord,
-    groupWordsIntoPhrases,
     calculateMaxWPMFromFPS,
     getFrameInterval
   } from './lib/rsvp-utils.js';
@@ -22,7 +21,9 @@
   import Settings from './lib/components/Settings.svelte';
   import TextInput from './lib/components/TextInput.svelte';
   import ProgressBar from './lib/components/ProgressBar.svelte';
-  import { extractWordFrame, groupWordsIntoPhrases as createPhrases } from './lib/rsvp-utils.js';
+  import { extractWordFrame } from './lib/rsvp-utils.js';
+
+  const WRAPPED_WORD_COUNT = 48;
 
   // State
   let frameWordCount = 1;
@@ -59,19 +60,14 @@
   let fadeTimeoutId = null;
   let rafId = null;
   let lastFrameTime = 0;
-  let phraseGroups = [];
 
   // Derived state
   $: currentWord = words[currentWordIndex - 1] || (words.length > 0 ? words[0] : '');
   $: wordFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), frameWordCount);
+  $: wrappedFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), WRAPPED_WORD_COUNT);
   $: timeRemaining = formatTimeRemaining(words.length - currentWordIndex, wordsPerMinute);
   $: isFocusMode = isPlaying || isPaused;
   $: maxWPM = calculateMaxWPMFromFPS(targetFPS);
-  
-  // Update phrase groups when text or displayMode changes
-  $: if (displayMode === 'wrapped') {
-    phraseGroups = createPhrases(words);
-  }
 
   function parseText() {
     words = parseTextUtil(text);
@@ -523,8 +519,8 @@
   <div class="display-area">
     <RSVPDisplay
       word={currentWord}
-      wordGroup={wordFrame.subset}
-      highlightIndex={wordFrame.centerOffset}
+      wordGroup={displayMode === 'wrapped' ? wrappedFrame.subset : wordFrame.subset}
+      highlightIndex={displayMode === 'wrapped' ? wrappedFrame.centerOffset : wordFrame.centerOffset}
       opacity={wordOpacity}
       {fadeDuration}
       {fadeEnabled}

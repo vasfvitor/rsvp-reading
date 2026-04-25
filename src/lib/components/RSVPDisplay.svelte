@@ -9,11 +9,8 @@
   export let fadeEnabled = true;
   export let displayMode = 'single'; // 'single', 'multi-word', 'wrapped'
 
-  function getORP(w) {
-    return getActualORPIndex(w);
-  }
-
-  $: useMultiMode = (displayMode === 'multi-word' || displayMode === 'wrapped') && wordGroup.length > 0;
+  $: useWrappedMode = displayMode === 'wrapped' && wordGroup.length > 0;
+  $: useMultiMode = displayMode === 'multi-word' && wordGroup.length > 0;
 
   // Get the current word (either from single mode or the highlighted word in group)
   $: currentWord = useMultiMode ? (wordGroup[highlightIndex] || '') : word;
@@ -40,17 +37,12 @@
   </div>
 
   <div class="word-container" class:multi-mode={displayMode === 'multi-word'} class:wrapped-mode={displayMode === 'wrapped'} style="opacity: {opacity}; transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;">
-    {#if displayMode === 'wrapped' && useMultiMode}
+    {#if useWrappedMode}
       <!-- Wrapped mode: show entire phrase with wrapped text -->
       <div class="wrapped-phrase">
         {#each wordGroup as w, idx}
           <span class="wrapped-word" class:highlight={idx === highlightIndex}>
-            {#if idx === highlightIndex}
-              <!-- Show ORP for highlighted word -->
-              <span class="before-orp">{w.slice(0, getORP(w))}</span><span class="orp">{w[getORP(w)] || ''}</span><span class="after-orp">{w.slice(getORP(w) + 1)}</span>
-            {:else}
-              {w}
-            {/if}
+            {w}
           </span>
         {/each}
       </div>
@@ -152,21 +144,25 @@
   }
 
   .word-container.wrapped-mode {
-    font-size: clamp(1.2rem, 3vw, 2.5rem);
+    font-size: clamp(1.05rem, 2.8vw, 2.15rem);
     white-space: normal;
     word-wrap: break-word;
     word-break: break-word;
-    line-height: 1.5;
-    height: auto;
-    max-width: 90vw;
+    line-height: 1.18;
+    height: min(52vh, 18rem);
+    max-width: min(88vw, 62rem);
+    overflow: hidden;
+    align-items: center;
   }
 
   .wrapped-phrase {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5em;
+    gap: 0.14em 0.42em;
     justify-content: center;
-    align-items: baseline;
+    align-content: center;
+    align-items: center;
+    max-height: 100%;
   }
 
   .wrapped-word {
@@ -176,6 +172,10 @@
 
   .wrapped-word.highlight {
     font-weight: 600;
+    color: #fff;
+    background: rgba(255, 68, 68, 0.18);
+    border-radius: 0.18em;
+    box-shadow: 0 0 24px rgba(255, 68, 68, 0.2);
   }
 
   .context-words {
@@ -228,6 +228,13 @@
 
     .word-container.multi-mode {
       font-size: clamp(0.9rem, 3.5vw, 2rem);
+    }
+
+    .word-container.wrapped-mode {
+      font-size: clamp(0.95rem, 4.8vw, 1.45rem);
+      height: min(58vh, 22rem);
+      max-width: 92vw;
+      line-height: 1.16;
     }
   }
 
