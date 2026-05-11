@@ -1,5 +1,5 @@
 /**
- * File parsing utilities for PDF and EPUB files
+ * File parsing utilities for PDF, EPUB, text, and Markdown files
  */
 
 /**
@@ -96,6 +96,50 @@ function cleanText(text) {
 }
 
 /**
+ * Parse a plain text file.
+ * @param {File} file - The text file to parse
+ * @returns {Promise<string>} The cleaned text
+ */
+export async function parsePlainText(file) {
+  return cleanText(await readFileText(file))
+}
+
+/**
+ * Strip common Markdown syntax while preserving readable text.
+ * @param {string} markdown - The markdown source
+ * @returns {string} Plain-ish readable text
+ */
+export function cleanMarkdown(markdown) {
+  return markdown
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^\s{0,3}([-*+]|\d+\.)\s+/gm, '')
+    .replace(/^>\s?/gm, '')
+    .replace(/[*_~]{1,3}([^*_~]+)[*_~]{1,3}/g, '$1')
+    .replace(/^\s*[-*_]{3,}\s*$/gm, ' ')
+}
+
+/**
+ * Parse a Markdown file.
+ * @param {File} file - The Markdown file to parse
+ * @returns {Promise<string>} Cleaned text
+ */
+export async function parseMarkdown(file) {
+  return cleanText(cleanMarkdown(await readFileText(file)))
+}
+
+async function readFileText(file) {
+  if (typeof file.text === 'function') {
+    return file.text()
+  }
+
+  return new Response(file).text()
+}
+
+/**
  * Detect file type and parse accordingly
  * @param {File} file - The file to parse
  * @returns {Promise<string>} The extracted text
@@ -107,6 +151,10 @@ export async function parseFile(file) {
     return parsePDF(file)
   } else if (fileName.endsWith('.epub')) {
     return parseEPUB(file)
+  } else if (fileName.endsWith('.txt')) {
+    return parsePlainText(file)
+  } else if (fileName.endsWith('.md') || fileName.endsWith('.markdown')) {
+    return parseMarkdown(file)
   } else {
     throw new Error(`Unsupported file type: ${fileName}`)
   }
@@ -117,5 +165,5 @@ export async function parseFile(file) {
  * @returns {string} Comma-separated list of supported extensions
  */
 export function getSupportedExtensions() {
-  return '.pdf,.epub'
+  return '.pdf,.epub,.txt,.md,.markdown'
 }

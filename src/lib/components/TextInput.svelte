@@ -5,6 +5,7 @@
   export let text = '';
   export let isLoading = false;
   export let loadingMessage = '';
+  export let presets = [];
 
   const dispatch = createEventDispatcher();
   let fileInputEl;
@@ -19,6 +20,10 @@
 
   function handleFileChange(event) {
     dispatch('fileselect', { file: event.target.files?.[0] });
+  }
+
+  function handlePresetSelect(id) {
+    dispatch('presetselect', { id });
   }
 
   function triggerFileUpload() {
@@ -36,6 +41,29 @@
     </button>
   </div>
 
+  {#if presets.length > 0}
+    <div class="preset-section">
+      <div class="section-label">Bundled documents</div>
+      <div class="preset-list">
+        {#each presets as preset}
+          <button
+            class="preset-btn"
+            on:click={() => handlePresetSelect(preset.id)}
+            disabled={isLoading}
+            title={`Load ${preset.fileName}`}
+          >
+            <span class="preset-name">{preset.name}</span>
+            <span class="preset-ext">{preset.extension}</span>
+          </button>
+        {/each}
+      </div>
+    </div>
+
+    <div class="divider">
+      <span>or choose a file</span>
+    </div>
+  {/if}
+
   <div class="upload-section">
     <input
       type="file"
@@ -48,7 +76,7 @@
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.01l1.41 1.41L11 14.84V19h2v-4.16l1.59 1.59L16 15.01 12.01 11 8 15.01z"/>
       </svg>
-      <span>Upload PDF or EPUB</span>
+      <span>Upload PDF, EPUB, TXT, or Markdown</span>
     </button>
     {#if loadingMessage}
       <p class="loading-message">{loadingMessage}</p>
@@ -123,6 +151,67 @@
 
   .upload-section {
     margin-bottom: 1rem;
+  }
+
+  .preset-section {
+    margin-bottom: 1rem;
+  }
+
+  .section-label {
+    color: #666;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .preset-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .preset-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #ddd;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+  }
+
+  .preset-btn:hover:not(:disabled) {
+    border-color: #ff4444;
+    background: #222;
+    color: #fff;
+  }
+
+  .preset-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .preset-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .preset-ext {
+    flex-shrink: 0;
+    color: #ff4444;
+    font-size: 0.75rem;
+    text-transform: uppercase;
   }
 
   .upload-btn {

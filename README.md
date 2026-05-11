@@ -21,7 +21,7 @@ The app uses **Optimal Recognition Point (ORP)** highlighting - the red letter i
 
 ## Features
 
-- **PDF & EPUB Support**: Upload PDF documents or EPUB e-books directly
+- **PDF, EPUB, TXT & Markdown Support**: Upload documents or load bundled local presets
 - **Adjustable reading speed**: 50-1000 words per minute (WPM)
 - **ORP highlighting**: Red-highlighted focal letter for faster recognition
 - **Monospace display**: Fixed-width font keeps the focal point stable
@@ -84,10 +84,16 @@ npm run preview
 
 ### Loading Content
 
+**From Bundled Presets:**
+1. Add `.pdf`, `.epub`, `.txt`, `.md`, or `.markdown` files to `src/presets/`
+2. Run the app in dev mode
+3. If there is no saved session, the first preset by filename loads automatically
+4. Click the document icon to choose another bundled preset
+
 **From Files:**
 1. Click the document icon in the header
-2. Click "Upload PDF or EPUB"
-3. Select your PDF or EPUB file
+2. Click "Upload PDF, EPUB, TXT, or Markdown"
+3. Select your supported file
 4. The text will be extracted and loaded automatically
 
 **From Text:**
@@ -164,7 +170,8 @@ rsvp/
 │   ├── main.js                 # Application entry point
 │   ├── lib/
 │   │   ├── rsvp-utils.js       # Core RSVP utility functions
-│   │   ├── file-parsers.js     # PDF and EPUB parsing utilities
+│   │   ├── file-parsers.js     # Document parsing utilities
+│   │   ├── preset-documents.js # Bundled preset discovery/loading
 │   │   ├── progress-storage.js # Session save/load utilities
 │   │   └── components/
 │   │       ├── RSVPDisplay.svelte   # Word display component
@@ -362,4 +369,3 @@ This project is open source and available under the [MIT License](LICENSE).
 - Built with [Svelte](https://svelte.dev/) and [Vite](https://vitejs.dev/)
 - PDF parsing powered by [PDF.js](https://mozilla.github.io/pdf.js/)
 - EPUB parsing powered by [Epub.js](https://github.com/futurepress/epub.js/)
-

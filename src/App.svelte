@@ -9,6 +9,7 @@
     getFrameInterval
   } from './lib/rsvp-utils.js';
   import { parseFile } from './lib/file-parsers.js';
+  import { getPresetDocuments, loadPresetDocument } from './lib/preset-documents.js';
   import {
     saveSession,
     loadSession,
@@ -24,6 +25,7 @@
   import { extractWordFrame } from './lib/rsvp-utils.js';
 
   const WRAPPED_WORDS_PER_LINE = 12;
+  const presetDocuments = getPresetDocuments();
 
   // State
   let frameWordCount = 1;
@@ -202,24 +204,60 @@
     showTextInput = false;
   }
 
-  async function handleFileSelect(event) {
-    const file = event.detail.file;
+  async function loadFile(file, options = {}) {
     if (!file) return;
 
     isLoadingFile = true;
-    loadingMessage = `Loading ${file.name}...`;
+    loadingMessage = `Loading ${options.label || file.name}...`;
 
     try {
       text = await parseFile(file);
       stop();
       parseText();
-      showTextInput = false;
+      if (!options.keepPanelOpen) {
+        showTextInput = false;
+      }
       loadingMessage = '';
     } catch (error) {
       console.error('Error parsing file:', error);
       loadingMessage = `Error: ${error.message}`;
       setTimeout(() => { loadingMessage = ''; }, 3000);
     } finally {
+      isLoadingFile = false;
+    }
+  }
+
+  async function handleFileSelect(event) {
+    await loadFile(event.detail.file);
+  }
+
+  async function handlePresetSelect(event) {
+    const preset = presetDocuments.find((item) => item.id === event.detail.id);
+    isLoadingFile = true;
+    loadingMessage = `Loading ${preset?.name || 'preset'}...`;
+
+    try {
+      const file = await loadPresetDocument(event.detail.id);
+      await loadFile(file);
+    } catch (error) {
+      console.error('Error loading preset:', error);
+      loadingMessage = `Error: ${error.message}`;
+      setTimeout(() => { loadingMessage = ''; }, 3000);
+      isLoadingFile = false;
+    }
+  }
+
+  async function loadDefaultPreset() {
+    const defaultPreset = presetDocuments[0];
+    if (!defaultPreset) return;
+
+    try {
+      const file = await loadPresetDocument(defaultPreset.id);
+      await loadFile(file, { label: defaultPreset.name, keepPanelOpen: true });
+    } catch (error) {
+      console.error('Error loading default preset:', error);
+      loadingMessage = `Error: ${error.message}`;
+      setTimeout(() => { loadingMessage = ''; }, 3000);
       isLoadingFile = false;
     }
   }
@@ -391,6 +429,8 @@
       if (savedSessionInfo) {
         showSavedSessionPrompt = true;
       }
+    } else {
+      loadDefaultPreset();
     }
   });
 
@@ -457,10 +497,12 @@
     <div class="panel-overlay">
       <TextInput
         {text}
+        presets={presetDocuments}
         isLoading={isLoadingFile}
         {loadingMessage}
         on:apply={handleTextApply}
         on:fileselect={handleFileSelect}
+        on:presetselect={handlePresetSelect}
         on:close={() => showTextInput = false}
       />
     </div>

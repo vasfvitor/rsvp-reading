@@ -6,7 +6,8 @@ function createMockFile(content, name, type) {
   return {
     name,
     type,
-    arrayBuffer: () => Promise.resolve(new ArrayBuffer(content.length))
+    arrayBuffer: () => Promise.resolve(new ArrayBuffer(content.length)),
+    text: () => Promise.resolve(content)
   }
 }
 
@@ -27,7 +28,7 @@ import { parseFile, getSupportedExtensions } from '../lib/file-parsers.js'
 describe('getSupportedExtensions', () => {
   it('should return supported file extensions', () => {
     const extensions = getSupportedExtensions()
-    expect(extensions).toBe('.pdf,.epub')
+    expect(extensions).toBe('.pdf,.epub,.txt,.md,.markdown')
   })
 
   it('should include pdf extension', () => {
@@ -39,11 +40,18 @@ describe('getSupportedExtensions', () => {
     const extensions = getSupportedExtensions()
     expect(extensions).toContain('.epub')
   })
+
+  it('should include plain text and markdown extensions', () => {
+    const extensions = getSupportedExtensions()
+    expect(extensions).toContain('.txt')
+    expect(extensions).toContain('.md')
+    expect(extensions).toContain('.markdown')
+  })
 })
 
 describe('parseFile', () => {
   it('should throw error for unsupported file types', async () => {
-    const file = createMockFile('content', 'test.txt', 'text/plain')
+    const file = createMockFile('content', 'test.rtf', 'application/rtf')
 
     await expect(parseFile(file)).rejects.toThrow('Unsupported file type')
   })
@@ -61,9 +69,31 @@ describe('parseFile', () => {
   })
 
   it('should handle files with uppercase extensions', async () => {
-    const file = createMockFile('content', 'test.TXT', 'text/plain')
+    const file = createMockFile('content', 'test.RTF', 'application/rtf')
 
-    await expect(parseFile(file)).rejects.toThrow('Unsupported file type: test.txt')
+    await expect(parseFile(file)).rejects.toThrow('Unsupported file type: test.rtf')
+  })
+
+  it('should parse plain text files', async () => {
+    const file = createMockFile('Hello\n\nworld   from text', 'notes.txt', 'text/plain')
+
+    await expect(parseFile(file)).resolves.toBe('Hello world from text')
+  })
+
+  it('should parse files with uppercase text extensions', async () => {
+    const file = createMockFile('Uppercase extension', 'notes.TXT', 'text/plain')
+
+    await expect(parseFile(file)).resolves.toBe('Uppercase extension')
+  })
+
+  it('should parse markdown files with light markdown cleanup', async () => {
+    const file = createMockFile(
+      '# Chapter One\n\nRead **bold text** and [a link](https://example.com).\n\n- List item',
+      'book.md',
+      'text/markdown'
+    )
+
+    await expect(parseFile(file)).resolves.toBe('Chapter One Read bold text and a link. List item')
   })
 })
 
