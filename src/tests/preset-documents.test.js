@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   createPresetDocuments,
+  getNextPresetDocument,
   loadPresetDocumentFromList,
   getMimeTypeForFileName
 } from '../lib/preset-documents.js'
@@ -55,6 +56,27 @@ describe('getMimeTypeForFileName', () => {
     expect(getMimeTypeForFileName('notes.txt')).toBe('text/plain')
     expect(getMimeTypeForFileName('draft.md')).toBe('text/markdown')
     expect(getMimeTypeForFileName('draft.markdown')).toBe('text/markdown')
+  })
+})
+
+describe('getNextPresetDocument', () => {
+  it('returns the next preset after the current bundled preset', () => {
+    const presets = [
+      { id: 'book-a', name: 'Book A' },
+      { id: 'book-b', name: 'Book B' }
+    ]
+
+    expect(getNextPresetDocument(presets, 'book-a')).toEqual(presets[1])
+  })
+
+  it('returns null when there is no following bundled preset', () => {
+    const presets = [
+      { id: 'book-a', name: 'Book A' },
+      { id: 'book-b', name: 'Book B' }
+    ]
+
+    expect(getNextPresetDocument(presets, 'book-b')).toBeNull()
+    expect(getNextPresetDocument(presets, null)).toBeNull()
   })
 })
 

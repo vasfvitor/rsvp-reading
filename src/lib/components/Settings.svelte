@@ -36,6 +36,7 @@
 
   // Calculate maximum WPM based on selected FPS
   $: maxWPM = calculateMaxWPMFromFPS(targetFPS);
+  $: showEffectsSettings = displayMode !== 'wrapped';
 </script>
 
 <div class="settings-panel">
@@ -179,39 +180,41 @@
     {/if}
   </section>
 
-  <!-- Effects Section -->
-  <section class="settings-section">
-    <div class="section-header">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="section-icon">
-        <path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.996.996 0 0 0-1.41 0L1.29 18.96a.996.996 0 0 0 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05a.996.996 0 0 0 0-1.41l-2.33-2.35zm-1.03 5.49l-2.12-2.12 2.44-2.44 2.12 2.12-2.44 2.44z"/>
-      </svg>
-      <span>Effects</span>
-    </div>
-
-    <div class="toggle-row">
-      <span class="toggle-label">Word fade</span>
-      <button
-        class="toggle"
-        class:active={fadeEnabled}
-        on:click={() => fadeEnabled = !fadeEnabled}
-        role="switch"
-        aria-checked={fadeEnabled}
-        aria-label="Toggle word fade effect"
-      >
-        <span class="toggle-thumb"></span>
-      </button>
-    </div>
-
-    {#if fadeEnabled}
-      <div class="sub-control">
-        <div class="control-header">
-          <span>Duration</span>
-          <span class="control-value">{fadeDuration}ms</span>
-        </div>
-        <input type="range" min="50" max="300" step="25" bind:value={fadeDuration} class="slider slider-sm">
+  {#if showEffectsSettings}
+    <!-- Effects Section -->
+    <section class="settings-section">
+      <div class="section-header">
+        <svg viewBox="0 0 24 24" fill="currentColor" class="section-icon">
+          <path d="M7.5 5.6L10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14zM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5zm-7.63 5.29a.996.996 0 0 0-1.41 0L1.29 18.96a.996.996 0 0 0 0 1.41l2.34 2.34c.39.39 1.02.39 1.41 0L16.7 11.05a.996.996 0 0 0 0-1.41l-2.33-2.35zm-1.03 5.49l-2.12-2.12 2.44-2.44 2.12 2.12-2.44 2.44z"/>
+        </svg>
+        <span>Effects</span>
       </div>
-    {/if}
-  </section>
+
+      <div class="toggle-row">
+        <span class="toggle-label">Word fade</span>
+        <button
+          class="toggle"
+          class:active={fadeEnabled}
+          on:click={() => fadeEnabled = !fadeEnabled}
+          role="switch"
+          aria-checked={fadeEnabled}
+          aria-label="Toggle word fade effect"
+        >
+          <span class="toggle-thumb"></span>
+        </button>
+      </div>
+
+      {#if fadeEnabled}
+        <div class="sub-control">
+          <div class="control-header">
+            <span>Duration</span>
+            <span class="control-value">{fadeDuration}ms</span>
+          </div>
+          <input type="range" min="50" max="300" step="25" bind:value={fadeDuration} class="slider slider-sm">
+        </div>
+      {/if}
+    </section>
+  {/if}
 
   <!-- Pauses Section -->
   <section class="settings-section">

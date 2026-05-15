@@ -50,6 +50,23 @@ export function getPresetDocuments() {
 }
 
 /**
+ * Find the bundled preset that follows the current preset.
+ * @param {Array<Pick<PresetDocument, 'id'>>} presets
+ * @param {string|null|undefined} currentId
+ * @returns {PresetDocument|null}
+ */
+export function getNextPresetDocument(presets, currentId) {
+  if (!currentId) return null
+
+  const currentIndex = presets.findIndex((item) => item.id === currentId)
+  if (currentIndex < 0 || currentIndex >= presets.length - 1) {
+    return null
+  }
+
+  return presets[currentIndex + 1]
+}
+
+/**
  * Load a preset document as a File.
  * @param {string} id
  * @returns {Promise<File>}

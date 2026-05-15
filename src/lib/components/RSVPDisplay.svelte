@@ -156,7 +156,6 @@
     word-break: break-word;
     height: min(calc(var(--wrapped-lines, 4) * 1.18em + 1.5rem), 70vh);
     max-width: min(88vw, 62rem);
-    overflow: hidden;
     align-items: center;
   }
 

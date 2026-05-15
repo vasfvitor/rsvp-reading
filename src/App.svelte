@@ -9,7 +9,7 @@
     getFrameInterval
   } from './lib/rsvp-utils.js';
   import { parseFile } from './lib/file-parsers.js';
-  import { getPresetDocuments, loadPresetDocument } from './lib/preset-documents.js';
+  import { getNextPresetDocument, getPresetDocuments, loadPresetDocument } from './lib/preset-documents.js';
   import {
     saveSession,
     loadSession,
@@ -43,19 +43,20 @@
   let jumpToValue = '';
   let savedSessionInfo = null;
   let showSavedSessionPrompt = false;
+  let activePresetId = null;
 
   // Settings
-  let wordsPerMinute = 300;
+  let wordsPerMinute = 3000;
   let fadeEnabled = true;
-  let fadeDuration = 150;
+  let fadeDuration = 200;
   let pauseAfterWords = 0;
-  let pauseDuration = 500;
+  let pauseDuration = 0;
   let pauseOnPunctuation = true;
   let punctuationPauseMultiplier = 2;
   let wordLengthWPMMultiplier = 5;
   let targetFPS = 75;
   let displayMode = 'wrapped'; // 'single', 'multi-word', 'wrapped'
-  let wrappedLineCount = 4;
+  let wrappedLineCount = 12;
 
   // Animation
   let wordOpacity = 1;
@@ -91,7 +92,7 @@
 
   function showNextWord() {
     if (currentWordIndex >= words.length) {
-      stop();
+      handleReadingComplete();
       return;
     }
 
@@ -119,6 +120,12 @@
 
     progress = ((currentWordIndex + advanceCount) / words.length) * 100;
     currentWordIndex += advanceCount;
+
+    if (currentWordIndex >= words.length) {
+      handleReadingComplete();
+      return;
+    }
+
     scheduleNextWord();
   }
 
@@ -197,8 +204,48 @@
     start();
   }
 
+  function clearPlaybackTimers() {
+    if (intervalId) {
+      clearTimeout(intervalId);
+      intervalId = null;
+    }
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+  }
+
+  function finishPlayback() {
+    isPlaying = false;
+    isPaused = false;
+    wordOpacity = 1;
+    clearPlaybackTimers();
+  }
+
+  async function handleReadingComplete() {
+    const nextPreset = getNextPresetDocument(presetDocuments, activePresetId);
+
+    if (!nextPreset) {
+      stop();
+      return;
+    }
+
+    finishPlayback();
+
+    try {
+      const file = await loadPresetDocument(nextPreset.id);
+      await loadFile(file, { label: nextPreset.name, presetId: nextPreset.id });
+    } catch (error) {
+      console.error('Error loading next preset:', error);
+      loadingMessage = `Error: ${error.message}`;
+      setTimeout(() => { loadingMessage = ''; }, 3000);
+      isLoadingFile = false;
+    }
+  }
+
   function handleTextApply(event) {
     text = event.detail.text;
+    activePresetId = null;
     stop();
     parseText();
     showTextInput = false;
@@ -214,6 +261,7 @@
       text = await parseFile(file);
       stop();
       parseText();
+      activePresetId = options.presetId || null;
       if (!options.keepPanelOpen) {
         showTextInput = false;
       }
@@ -238,7 +286,7 @@
 
     try {
       const file = await loadPresetDocument(event.detail.id);
-      await loadFile(file);
+      await loadFile(file, { presetId: event.detail.id });
     } catch (error) {
       console.error('Error loading preset:', error);
       loadingMessage = `Error: ${error.message}`;
@@ -253,7 +301,7 @@
 
     try {
       const file = await loadPresetDocument(defaultPreset.id);
-      await loadFile(file, { label: defaultPreset.name, keepPanelOpen: true });
+      await loadFile(file, { label: defaultPreset.name, keepPanelOpen: true, presetId: defaultPreset.id });
     } catch (error) {
       console.error('Error loading default preset:', error);
       loadingMessage = `Error: ${error.message}`;
@@ -281,7 +329,8 @@
         targetFPS,
         displayMode,
         wrappedLineCount
-      }
+      },
+      activePresetId
     });
   }
 
@@ -290,6 +339,7 @@
     if (!session) return false;
 
     text = session.text;
+    activePresetId = session.activePresetId || null;
     parseText();
     currentWordIndex = session.currentWordIndex;
     progress = (currentWordIndex / words.length) * 100;
