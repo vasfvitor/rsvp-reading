@@ -4,6 +4,7 @@ import { svelteTesting } from '@testing-library/svelte/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/rsvp-reading/',
   plugins: [svelte(), svelteTesting()],
   test: {
     globals: true,
