@@ -2,7 +2,8 @@
  * Progress storage utilities for persisting reading sessions
  */
 
-const STORAGE_KEY = 'rsvp-reading-session';
+const SESSION_STORAGE_KEY = 'rsvp-reading-session';
+const PREFERENCES_STORAGE_KEY = 'rsvp-reading-preferences';
 
 /**
  * Save the current reading session to localStorage
@@ -11,6 +12,7 @@ const STORAGE_KEY = 'rsvp-reading-session';
  * @param {number} session.currentWordIndex - Current position in the text
  * @param {number} session.totalWords - Total word count
  * @param {Object} session.settings - Reader settings
+ * @param {string|null} session.activePresetId - Active preset document
  * @returns {boolean} Whether the save was successful
  */
 export function saveSession(session) {
@@ -20,9 +22,10 @@ export function saveSession(session) {
       currentWordIndex: session.currentWordIndex,
       totalWords: session.totalWords,
       settings: session.settings,
+      activePresetId: session.activePresetId ?? null,
       savedAt: Date.now()
     };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(data));
     return true;
   } catch (error) {
     console.error('Failed to save session:', error);
@@ -36,7 +39,7 @@ export function saveSession(session) {
  */
 export function loadSession() {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(SESSION_STORAGE_KEY);
     if (!data) return null;
     return JSON.parse(data);
   } catch (error) {
@@ -51,7 +54,7 @@ export function loadSession() {
  */
 export function hasSession() {
   try {
-    return localStorage.getItem(STORAGE_KEY) !== null;
+    return localStorage.getItem(SESSION_STORAGE_KEY) !== null;
   } catch {
     return false;
   }
@@ -63,7 +66,7 @@ export function hasSession() {
  */
 export function clearSession() {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(SESSION_STORAGE_KEY);
     return true;
   } catch (error) {
     console.error('Failed to clear session:', error);
@@ -77,7 +80,7 @@ export function clearSession() {
  */
 export function getSessionSummary() {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(SESSION_STORAGE_KEY);
     if (!data) return null;
     const parsed = JSON.parse(data);
     return {
@@ -88,6 +91,57 @@ export function getSessionSummary() {
     };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Save reader preferences to localStorage.
+ * @param {Object} preferences - The preferences to save
+ * @param {Object} preferences.settings - Reader settings
+ * @param {string|null} preferences.activePresetId - Last active preset document
+ * @returns {boolean} Whether the save was successful
+ */
+export function savePreferences(preferences) {
+  try {
+    const data = {
+      settings: preferences.settings,
+      activePresetId: preferences.activePresetId ?? null,
+      savedAt: Date.now()
+    };
+    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error('Failed to save preferences:', error);
+    return false;
+  }
+}
+
+/**
+ * Load reader preferences from localStorage.
+ * @returns {Object|null} The saved preferences or null if none exist
+ */
+export function loadPreferences() {
+  try {
+    const data = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+    if (!data) return null;
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Failed to load preferences:', error);
+    return null;
+  }
+}
+
+/**
+ * Clear saved reader preferences from localStorage.
+ * @returns {boolean} Whether the clear was successful
+ */
+export function clearPreferences() {
+  try {
+    localStorage.removeItem(PREFERENCES_STORAGE_KEY);
+    return true;
+  } catch (error) {
+    console.error('Failed to clear preferences:', error);
+    return false;
   }
 }
 

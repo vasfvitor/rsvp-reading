@@ -5,6 +5,9 @@ import {
   hasSession,
   clearSession,
   getSessionSummary,
+  savePreferences,
+  loadPreferences,
+  clearPreferences,
   percentageToWordIndex,
   wordIndexToPercentage
 } from '../lib/progress-storage.js'
@@ -39,7 +42,8 @@ describe('progress-storage', () => {
         settings: {
           wordsPerMinute: 300,
           fadeEnabled: true
-        }
+        },
+        activePresetId: 'sample-book'
       }
 
       const result = saveSession(session)
@@ -52,6 +56,7 @@ describe('progress-storage', () => {
       expect(savedData.currentWordIndex).toBe(5)
       expect(savedData.totalWords).toBe(100)
       expect(savedData.settings.wordsPerMinute).toBe(300)
+      expect(savedData.activePresetId).toBe('sample-book')
       expect(savedData.savedAt).toBeDefined()
     })
 
@@ -124,6 +129,32 @@ describe('progress-storage', () => {
 
     it('should return true on success', () => {
       expect(clearSession()).toBe(true)
+    })
+  })
+
+  describe('preferences storage', () => {
+    it('should save and load reader preferences', () => {
+      const preferences = {
+        settings: {
+          wordsPerMinute: 450,
+          displayMode: 'multi-word'
+        },
+        activePresetId: 'book-2'
+      }
+
+      expect(savePreferences(preferences)).toBe(true)
+
+      const savedData = JSON.parse(localStorageMock.setItem.mock.calls[0][1])
+      expect(savedData.settings.wordsPerMinute).toBe(450)
+      expect(savedData.activePresetId).toBe('book-2')
+
+      localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(savedData))
+      expect(loadPreferences()).toEqual(savedData)
+    })
+
+    it('should clear saved preferences', () => {
+      expect(clearPreferences()).toBe(true)
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('rsvp-reading-preferences')
     })
   })
 

@@ -15,7 +15,9 @@
     loadSession,
     clearSession,
     hasSession,
-    getSessionSummary
+    getSessionSummary,
+    savePreferences,
+    loadPreferences
   } from './lib/progress-storage.js';
   import RSVPDisplay from './lib/components/RSVPDisplay.svelte';
   import Controls from './lib/components/Controls.svelte';
@@ -44,6 +46,7 @@
   let savedSessionInfo = null;
   let showSavedSessionPrompt = false;
   let activePresetId = null;
+  let preferencesReady = false;
 
   // Settings
   let wordsPerMinute = 3000;
@@ -79,6 +82,40 @@
   $: timeRemaining = formatTimeRemaining(words.length - currentWordIndex, wordsPerMinute);
   $: isFocusMode = isPlaying || isPaused;
   $: maxWPM = calculateMaxWPMFromFPS(targetFPS);
+  $: if (preferencesReady) {
+    savePreferences({
+      settings: {
+        wordsPerMinute,
+        fadeEnabled,
+        fadeDuration,
+        pauseOnPunctuation,
+        punctuationPauseMultiplier,
+        wordLengthWPMMultiplier,
+        pauseAfterWords,
+        pauseDuration,
+        frameWordCount,
+        targetFPS,
+        displayMode,
+        wrappedLineCount
+      },
+      activePresetId
+    });
+  }
+
+  function applySettings(settings = {}) {
+    wordsPerMinute = settings.wordsPerMinute ?? wordsPerMinute;
+    fadeEnabled = settings.fadeEnabled ?? fadeEnabled;
+    fadeDuration = settings.fadeDuration ?? fadeDuration;
+    pauseOnPunctuation = settings.pauseOnPunctuation ?? pauseOnPunctuation;
+    punctuationPauseMultiplier = settings.punctuationPauseMultiplier ?? punctuationPauseMultiplier;
+    wordLengthWPMMultiplier = settings.wordLengthWPMMultiplier ?? wordLengthWPMMultiplier;
+    pauseAfterWords = settings.pauseAfterWords ?? pauseAfterWords;
+    pauseDuration = settings.pauseDuration ?? pauseDuration;
+    frameWordCount = settings.frameWordCount ?? frameWordCount;
+    targetFPS = settings.targetFPS ?? targetFPS;
+    displayMode = settings.displayMode ?? displayMode;
+    wrappedLineCount = settings.wrappedLineCount ?? wrappedLineCount;
+  }
 
   function parseText() {
     words = parseTextUtil(text);
@@ -295,8 +332,10 @@
     }
   }
 
-  async function loadDefaultPreset() {
-    const defaultPreset = presetDocuments[0];
+  async function loadDefaultPreset(preferredPresetId = activePresetId) {
+    const defaultPreset = preferredPresetId
+      ? presetDocuments.find((item) => item.id === preferredPresetId) || presetDocuments[0]
+      : presetDocuments[0];
     if (!defaultPreset) return;
 
     try {
@@ -338,6 +377,8 @@
     const session = loadSession();
     if (!session) return false;
 
+    preferencesReady = false;
+
     text = session.text;
     activePresetId = session.activePresetId || null;
     parseText();
@@ -345,21 +386,11 @@
     progress = (currentWordIndex / words.length) * 100;
 
     if (session.settings) {
-      wordsPerMinute = session.settings.wordsPerMinute ?? wordsPerMinute;
-      fadeEnabled = session.settings.fadeEnabled ?? fadeEnabled;
-      fadeDuration = session.settings.fadeDuration ?? fadeDuration;
-      pauseOnPunctuation = session.settings.pauseOnPunctuation ?? pauseOnPunctuation;
-      punctuationPauseMultiplier = session.settings.punctuationPauseMultiplier ?? punctuationPauseMultiplier;
-      wordLengthWPMMultiplier = session.settings.wordLengthWPMMultiplier ?? wordLengthWPMMultiplier;
-      pauseAfterWords = session.settings.pauseAfterWords ?? pauseAfterWords;
-      pauseDuration = session.settings.pauseDuration ?? pauseDuration;
-      frameWordCount = session.settings.frameWordCount ?? frameWordCount;
-      targetFPS = session.settings.targetFPS ?? targetFPS;
-      displayMode = session.settings.displayMode ?? displayMode;
-      wrappedLineCount = session.settings.wrappedLineCount ?? wrappedLineCount;
+      applySettings(session.settings);
     }
 
     showSavedSessionPrompt = false;
+    preferencesReady = true;
     return true;
   }
 
@@ -469,7 +500,15 @@
     }
   }
 
-  onMount(() => {
+  onMount(async () => {
+    preferencesReady = false;
+    const preferences = loadPreferences();
+
+    if (preferences?.settings) {
+      applySettings(preferences.settings);
+    }
+
+    activePresetId = preferences?.activePresetId || null;
     parseText();
     window.addEventListener('keydown', handleKeydown);
 
@@ -480,8 +519,10 @@
         showSavedSessionPrompt = true;
       }
     } else {
-      loadDefaultPreset();
+      await loadDefaultPreset(preferences?.activePresetId || null);
     }
+
+    preferencesReady = true;
   });
 
   onDestroy(() => {
