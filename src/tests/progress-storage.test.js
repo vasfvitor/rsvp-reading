@@ -6,10 +6,7 @@ import {
   clearSession,
   getSessionSummary,
   savePreferences,
-  loadPreferences,
-  clearPreferences,
-  percentageToWordIndex,
-  wordIndexToPercentage
+  loadPreferences
 } from '../lib/progress-storage.js'
 
 // Mock localStorage
@@ -151,11 +148,6 @@ describe('progress-storage', () => {
       localStorageMock.getItem.mockReturnValueOnce(JSON.stringify(savedData))
       expect(loadPreferences()).toEqual(savedData)
     })
-
-    it('should clear saved preferences', () => {
-      expect(clearPreferences()).toBe(true)
-      expect(localStorageMock.removeItem).toHaveBeenCalledWith('rsvp-reading-preferences')
-    })
   })
 
   describe('getSessionSummary', () => {
@@ -192,47 +184,6 @@ describe('progress-storage', () => {
       const summary = getSessionSummary()
 
       expect(summary.hasText).toBe(false)
-    })
-  })
-
-  describe('percentageToWordIndex', () => {
-    it('should convert percentage to word index', () => {
-      expect(percentageToWordIndex(0, 100)).toBe(0)
-      expect(percentageToWordIndex(50, 100)).toBe(50)
-      expect(percentageToWordIndex(100, 100)).toBe(100)
-    })
-
-    it('should handle decimal percentages', () => {
-      expect(percentageToWordIndex(25.5, 100)).toBe(25)
-      expect(percentageToWordIndex(33.33, 300)).toBe(99)
-    })
-
-    it('should clamp values to 0-100 range', () => {
-      expect(percentageToWordIndex(-10, 100)).toBe(0)
-      expect(percentageToWordIndex(150, 100)).toBe(100)
-    })
-
-    it('should return 0 for invalid totalWords', () => {
-      expect(percentageToWordIndex(50, 0)).toBe(0)
-      expect(percentageToWordIndex(50, -10)).toBe(0)
-    })
-  })
-
-  describe('wordIndexToPercentage', () => {
-    it('should convert word index to percentage', () => {
-      expect(wordIndexToPercentage(0, 100)).toBe(0)
-      expect(wordIndexToPercentage(50, 100)).toBe(50)
-      expect(wordIndexToPercentage(100, 100)).toBe(100)
-    })
-
-    it('should round to nearest integer', () => {
-      expect(wordIndexToPercentage(33, 100)).toBe(33)
-      expect(wordIndexToPercentage(1, 3)).toBe(33)
-    })
-
-    it('should return 0 for invalid totalWords', () => {
-      expect(wordIndexToPercentage(50, 0)).toBe(0)
-      expect(wordIndexToPercentage(50, -10)).toBe(0)
     })
   })
 })

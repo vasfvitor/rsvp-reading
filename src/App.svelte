@@ -5,8 +5,7 @@
     getWordDelay as getWordDelayUtil,
     formatTimeRemaining,
     shouldPauseAtWord,
-    calculateMaxWPMFromFPS,
-    getFrameInterval
+    calculateMaxWPMFromFPS
   } from './lib/rsvp-utils.js';
   import { parseFile } from './lib/file-parsers.js';
   import { getNextPresetDocument, getPresetDocuments, loadPresetDocument } from './lib/preset-documents.js';
@@ -671,7 +670,6 @@
       opacity={displayMode === 'wrapped' ? 1 : wordOpacity}
       {fadeDuration}
       fadeEnabled={displayMode !== 'wrapped' && fadeEnabled}
-      multiWordEnabled={frameWordCount > 1}
       {displayMode}
       {wrappedLineCount}
     />
@@ -721,7 +719,7 @@
           <span>−WPM</span>
         </button>
         <span class="wpm-display">{wordsPerMinute}</span>
-        <button class="touch-btn" on:click={() => wordsPerMinute = Math.min(1000, wordsPerMinute + 50)} title="Faster">
+        <button class="touch-btn" on:click={() => wordsPerMinute = Math.min(maxWPM, wordsPerMinute + 50)} title="Faster">
           <span>+WPM</span>
         </button>
         <button class="touch-btn" on:click={() => currentWordIndex = Math.min(words.length, currentWordIndex + 5)} title="Forward 5 words">

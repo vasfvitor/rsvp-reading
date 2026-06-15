@@ -17,14 +17,10 @@
       disabled={!canPlay}
       title="Play (Space)"
     >
-      {#if minimal}
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-      {:else}
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+      {#if !minimal}
         <span>Play</span>
       {/if}
     </button>
@@ -34,14 +30,10 @@
       on:click={() => dispatch('pause')}
       title="Pause (Space)"
     >
-      {#if minimal}
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-        </svg>
-      {:else}
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-        </svg>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+      </svg>
+      {#if !minimal}
         <span>Pause</span>
       {/if}
     </button>
@@ -51,14 +43,10 @@
       on:click={() => dispatch('resume')}
       title="Resume (Space)"
     >
-      {#if minimal}
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-      {:else}
-        <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+      {#if !minimal}
         <span>Resume</span>
       {/if}
     </button>
@@ -70,14 +58,10 @@
     disabled={!isPlaying && !isPaused}
     title="Stop (Esc)"
   >
-    {#if minimal}
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M6 6h12v12H6z"/>
-      </svg>
-    {:else}
-      <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M6 6h12v12H6z"/>
-      </svg>
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M6 6h12v12H6z"/>
+    </svg>
+    {#if !minimal}
       <span>Stop</span>
     {/if}
   </button>

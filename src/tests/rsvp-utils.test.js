@@ -5,7 +5,6 @@ import {
   getActualORPIndex,
   getWordDelay,
   formatTimeRemaining,
-  splitWordForDisplay,
   shouldPauseAtWord,
   extractWordFrame
 } from '../lib/rsvp-utils.js'
@@ -276,37 +275,6 @@ describe('formatTimeRemaining', () => {
   })
 })
 
-describe('splitWordForDisplay', () => {
-  it('should split word at ORP position', () => {
-    // 'hello' has ORP at index 1 (letter 'e')
-    const result = splitWordForDisplay('hello')
-    expect(result).toEqual({ before: 'h', orp: 'e', after: 'llo' })
-  })
-
-  it('should handle short words', () => {
-    // 'cat' has ORP at index 0 (letter 'c')
-    const result = splitWordForDisplay('cat')
-    expect(result).toEqual({ before: '', orp: 'c', after: 'at' })
-  })
-
-  it('should handle single letter words', () => {
-    const result = splitWordForDisplay('I')
-    expect(result).toEqual({ before: '', orp: 'I', after: '' })
-  })
-
-  it('should handle empty input', () => {
-    expect(splitWordForDisplay('')).toEqual({ before: '', orp: '', after: '' })
-    expect(splitWordForDisplay(null)).toEqual({ before: '', orp: '', after: '' })
-  })
-
-  it('should handle words with leading punctuation', () => {
-    // '"hello' - ORP should be on 'e' (second letter)
-    const result = splitWordForDisplay('"hello')
-    expect(result.orp).toBe('e')
-    expect(result.before).toBe('"h')
-    expect(result.after).toBe('llo')
-  })
-})
 
 describe('shouldPauseAtWord', () => {
   it('should return false when pauseAfterWords is 0', () => {

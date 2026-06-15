@@ -126,44 +126,6 @@ export function loadPreferences() {
     if (!data) return null;
     return JSON.parse(data);
   } catch (error) {
-    console.error('Failed to load preferences:', error);
     return null;
   }
-}
-
-/**
- * Clear saved reader preferences from localStorage.
- * @returns {boolean} Whether the clear was successful
- */
-export function clearPreferences() {
-  try {
-    localStorage.removeItem(PREFERENCES_STORAGE_KEY);
-    return true;
-  } catch (error) {
-    console.error('Failed to clear preferences:', error);
-    return false;
-  }
-}
-
-/**
- * Calculate word index from a percentage
- * @param {number} percentage - Percentage (0-100)
- * @param {number} totalWords - Total word count
- * @returns {number} The word index
- */
-export function percentageToWordIndex(percentage, totalWords) {
-  if (!totalWords || totalWords <= 0) return 0;
-  const clamped = Math.max(0, Math.min(100, percentage));
-  return Math.floor((clamped / 100) * totalWords);
-}
-
-/**
- * Calculate percentage from word index
- * @param {number} wordIndex - Current word index
- * @param {number} totalWords - Total word count
- * @returns {number} The percentage (0-100)
- */
-export function wordIndexToPercentage(wordIndex, totalWords) {
-  if (!totalWords || totalWords <= 0) return 0;
-  return Math.round((wordIndex / totalWords) * 100);
 }
